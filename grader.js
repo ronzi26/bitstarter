@@ -14,7 +14,7 @@ References:
  + commander.js
    - https://github.com/visionmedia/commander.js
    - http://tjholowaychuk.com/post/9103188408/commander-js-nodejs-command-line-interfaces-made-easy
-
+ 
  + JSON
    - http://en.wikipedia.org/wiki/JSON
    - https://developer.mozilla.org/en-US/docs/JSON
@@ -67,9 +67,9 @@ if(require.main == module) {
     program
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
-        .option('-url, --url <url_html_file>', 'url to index.html', clone(assertFileExists), URLFILE_DEFAULT)
+        .option('-url, --url <url_html_file>', 'url to index.html', clone(assertFileExists), rest.get(http://stark-harbor-6729.herokuapp.com/).on('complete', var checkJson = checkHtmlFile(program.file, program.checks));)
         .parse(process.argv);
-    var checkJson = checkHtmlFile(program.file, program.checks);
+    //var checkJson = checkHtmlFile(program.file, program.checks);
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
 } else {
