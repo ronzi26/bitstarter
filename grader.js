@@ -20,76 +20,72 @@ References:
    - https://developer.mozilla.org/en-US/docs/JSON
    - https://developer.mozilla.org/en-US/docs/JSON#JSON_in_Firefox_2
 */
-
 var fs = require('fs');
+var sys = require('util');
+var rest = require('restler');
 var program = require('commander');
 var cheerio = require('cheerio');
 var HTMLFILE_DEFAULT = "index.html";
 var CHECKSFILE_DEFAULT = "checks.json";
+var URL_DEFAULT = 'http://stark-harbor-6729.herokuapp.com';
 
-var assertFileExists = function(infile) {
+var assertFileExists = function (infile) {
     var instr = infile.toString();
-    if(!fs.existsSync(instr)) {
+    if (!fs.existsSync(instr)) {
 	console.log("%s does not exist. Exiting.", instr);
 	process.exit(1); // http://nodejs.org/api/process.html#process_process_exit_code
-    }
+	}
     return instr;
 };
 
-var cheerioHtmlFile = function(htmlfile) {
+var cheerioHtmlFile = function (htmlfile) {
     return cheerio.load(fs.readFileSync(htmlfile));
 };
 
-var loadChecks = function(checksfile) {
+var loadChecks = function (checksfile) {
     return JSON.parse(fs.readFileSync(checksfile));
 };
 
-var checkHtmlFile = function(htmlfile, checksfile) {
+var checkHtmlFile = function (htmlfile, checksfile) {
     $ = cheerioHtmlFile(htmlfile);
     var checks = loadChecks(checksfile).sort();
     var out = {};
     var ii;
-    for(ii in checks) {
+    for (ii in checks) {
 	var present = $(checks[ii]).length > 0;
 	out[checks[ii]] = present;
-    }
+	}
     return out;
 };
 
-var clone = function(fn) {
+var clone = function (fn) {
     // Workaround for commander.js issue.
     // http://stackoverflow.com/a/6772648
     return fn.bind({});
 };
 
-if(require.main == module) {
+if (require.main == module) {
     program
-	.option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
-	.option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
-    //.option('-url, --url <url_link>', 'url to index.html', clone(assertFileExists), URL_DEFAULT)
-	.parse(process.argv);
-    //if(program.url){
-       // var url = program.url.toString();
-    //var checkJson = checkURL(program.url, program.checks);
-    var checkJson = checkHtmlFile(program.file, program.checks);
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
-} else {
-    exports.checkHtmlFile = checkHtmlFile;
+    .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
+    .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+    .option('-u, --url <url_link>', 'Command Line defined URL')
+    .parse(process.argv);
+    if (program.u) {
+	var url = program.url.toString();
+	rest.get(url).on('complete', function (result, response) {
+	    console.log("success download");
+	    fs.writeFileSync('outfile.txt', result);
+	    console.log("write download to outfile.txt");
+	    var checkJson = checkHtmlFile('outfile.txt', 'checks.json');
+	    var outJson = JSON.stringify(checkJson, null, 4);
+	    console.log(outJson);
+	    });
+	}
+    if (program.file) {
+	var checkJson = checkHtmlFile(program.file, program.checks);
+	var outJson = JSON.stringify(checkJson, null, 4);
+	console.log(outJson);
+	} else {
+	    exports.checkHtmlFile = checkHtmlFile;
+	    }
 }
-
-var sys = require('util'),rest = require('restler');
-rest.get('http://stark-harbor-6729.herokuapp.com').on('complete', function (result,reponse) {
-    if (result instanceof Error){
-	sys.puts('Error: ' + result.message);
-    this.retry(5000); // try again after 5 sec
-	//console.log("There is a problem");
-	}
-    else {
-	return result;
-	//sys.puts(result);
-	//var checkJson = checkHtmlFile(result, program.checks);
-	//var outJson = JSON.stringify(checkjson, null, 4);
-	//console.log(outJson);
-	}
-});
